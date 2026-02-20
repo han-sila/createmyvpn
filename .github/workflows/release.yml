@@ -1,0 +1,102 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write   # needed to create the GitHub release and upload assets
+
+jobs:
+  # ── Build Windows installer ────────────────────────────────────────────────
+  build-windows:
+    name: Build — Windows
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Setup Rust (stable)
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust build artifacts
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Build Tauri app (Windows)
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: 'CreateMyVPN ${{ github.ref_name }}'
+          releaseBody: |
+            See [CHANGELOG](https://github.com/${{ github.repository }}/blob/main/docs/PLAN.md) for details.
+          releaseDraft: true
+          prerelease: false
+
+  # ── Build Linux .deb ───────────────────────────────────────────────────────
+  build-linux:
+    name: Build — Linux (Ubuntu)
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libgtk-3-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            libssl-dev \
+            pkg-config \
+            cmake \
+            nasm \
+            libglib2.0-dev \
+            libgdk-pixbuf2.0-dev \
+            libpango1.0-dev \
+            libatk1.0-dev \
+            libcairo2-dev \
+            libsoup-3.0-dev \
+            libjavascriptcoregtk-4.1-dev
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Setup Rust (stable)
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust build artifacts
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Build Tauri app (Linux)
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: 'CreateMyVPN ${{ github.ref_name }}'
+          releaseBody: |
+            See [CHANGELOG](https://github.com/${{ github.repository }}/blob/main/docs/PLAN.md) for details.
+          releaseDraft: true
+          prerelease: false
