@@ -1,0 +1,62 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Cargo build configuration — speed optimisations
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ── Compiler cache (sccache) ─────────────────────────────────────────────────
+# sccache wraps rustc and caches compilation results on disk.
+# DISABLED on Windows: sccache's TCP server crashes (os error 10054) when
+# compiling aws-sdk-ec2 (the largest crate, ~200k lines of generated code).
+# Enable on Linux/macOS only by uncommenting the two lines below.
+# Install with: winget install Mozilla.sccache
+# [build]
+# rustc-wrapper = "sccache"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Dev profile — fast iteration builds
+# ─────────────────────────────────────────────────────────────────────────────
+[profile.dev]
+# Max parallelism — each crate compiled independently, no cross-crate inlining
+codegen-units = 256
+# No optimisation on your own code in dev (fast compile, debuggable)
+opt-level = 0
+
+[profile.dev.package."*"]
+# Dependencies stay at opt-level 1 so AWS SDK / crypto aren't unusably slow
+opt-level = 1
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Release profile — balance between speed and output quality
+# ─────────────────────────────────────────────────────────────────────────────
+[profile.release]
+# 4 parallel codegen units — faster compile, ~3–5% larger binary vs codegen-units=1
+codegen-units = 4
+
+# Thin LTO: cross-crate dead-code removal in parallel (fast + effective)
+lto = "thin"
+
+# Drop debug symbols — saves 10–30 MB from the installer
+strip = "symbols"
+
+# Remove panic stack-unwinding machinery (~50–200 KB smaller binary, no UX impact)
+panic = "abort"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# SIZE-OPTIMISED profile  (use: cargo build --profile release-small)
+#
+# Produces the smallest possible binary at the cost of ~2× longer compile.
+# Use for distribution releases; the default [profile.release] above is
+# better for day-to-day iteration on a branch.
+#
+# Typical savings vs [profile.release]:
+#   codegen-units = 1   → better dead-code elimination       saves ~5–10%
+#   lto = true          → full (fat) LTO cross all crates    saves ~10–20%
+#   opt-level = "z"     → size over speed (aggressive)       saves ~5–15%
+#   panic = "abort"     → no unwinding tables                saves ~50–200 KB
+# ─────────────────────────────────────────────────────────────────────────────
+[profile.release-small]
+inherits      = "release"
+codegen-units = 1
+lto           = true
+opt-level     = "z"
+panic         = "abort"
+strip         = "symbols"
