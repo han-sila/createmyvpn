@@ -34,6 +34,10 @@ CreateMyVPN is an open-source desktop app that lets anyone deploy, use, and dest
   <img src="design/assets/app-mockup.png" alt="CreateMyVPN app screenshot" width="100%" />
 </p>
 
+<p align="center">
+  <img src="design/assets/og-card.png" alt="CreateMyVPN — Deploy your private VPN in 2 minutes" width="100%" />
+</p>
+
 ## Features
 
 - **One-click deploy** — provisions a full VPN server (VPC, security group, instance, WireGuard) in your own cloud account
