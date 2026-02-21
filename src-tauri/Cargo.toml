@@ -66,3 +66,6 @@ ssh-key = { version = "0.6", features = ["ed25519", "rand_core"] }
 uuid = { version = "1", features = ["v4"] }
 chrono = { version = "0.4", features = ["serde"] }
 async-trait = "0.1"
+
+[dev-dependencies]
+tempfile = "3"

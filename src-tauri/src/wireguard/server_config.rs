@@ -27,3 +27,40 @@ AllowedIPs = 10.8.0.2/32
         client_public_key = client_public_key,
     )
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn render_server_config_contains_interface() {
+        let config = render_server_config("SRV_PRIV", "CLI_PUB", 51820);
+        assert!(config.contains("[Interface]"));
+        assert!(config.contains("Address = 10.8.0.1/24"));
+        assert!(config.contains("ListenPort = 51820"));
+        assert!(config.contains("PrivateKey = SRV_PRIV"));
+    }
+
+    #[test]
+    fn render_server_config_contains_nat_rules() {
+        let config = render_server_config("SRV_PRIV", "CLI_PUB", 51820);
+        assert!(config.contains("PostUp = iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE"));
+        assert!(config.contains("PostDown = iptables -t nat -D POSTROUTING -o eth0 -j MASQUERADE"));
+        assert!(config.contains("PostUp = iptables -A FORWARD -i wg0 -j ACCEPT"));
+        assert!(config.contains("PostDown = iptables -D FORWARD -i wg0 -j ACCEPT"));
+    }
+
+    #[test]
+    fn render_server_config_contains_peer() {
+        let config = render_server_config("SRV_PRIV", "CLI_PUB", 51820);
+        assert!(config.contains("[Peer]"));
+        assert!(config.contains("PublicKey = CLI_PUB"));
+        assert!(config.contains("AllowedIPs = 10.8.0.2/32"));
+    }
+
+    #[test]
+    fn render_server_config_custom_port() {
+        let config = render_server_config("K", "P", 9999);
+        assert!(config.contains("ListenPort = 9999"));
+    }
+}

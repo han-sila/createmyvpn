@@ -4,7 +4,8 @@ fn main() {
     // Debug builds (tauri dev / cargo run) do NOT embed this manifest so the dev
     // binary can be launched without UAC elevation. VPN connect won't work in debug
     // without manual elevation, but the full UI is testable without admin rights.
-    let mut  attributes = tauri_build::Attributes::new();
+    #[allow(unused_mut)]
+    let  attributes = tauri_build::Attributes::new();
 
     #[cfg(all(target_os = "windows", not(debug_assertions)))]
     {

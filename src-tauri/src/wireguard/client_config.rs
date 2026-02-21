@@ -23,3 +23,39 @@ PersistentKeepalive = 25
         listen_port = listen_port,
     )
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn render_client_config_contains_interface_section() {
+        let config = render_client_config("PRIV_KEY", "PUB_KEY", "1.2.3.4", 51820);
+        assert!(config.contains("[Interface]"));
+        assert!(config.contains("PrivateKey = PRIV_KEY"));
+        assert!(config.contains("Address = 10.8.0.2/32"));
+        assert!(config.contains("DNS = 1.1.1.1"));
+    }
+
+    #[test]
+    fn render_client_config_contains_peer_section() {
+        let config = render_client_config("PRIV_KEY", "PUB_KEY", "1.2.3.4", 51820);
+        assert!(config.contains("[Peer]"));
+        assert!(config.contains("PublicKey = PUB_KEY"));
+        assert!(config.contains("Endpoint = 1.2.3.4:51820"));
+        assert!(config.contains("AllowedIPs = 0.0.0.0/0"));
+        assert!(config.contains("PersistentKeepalive = 25"));
+    }
+
+    #[test]
+    fn render_client_config_uses_custom_port() {
+        let config = render_client_config("KEY", "PUB", "10.0.0.1", 12345);
+        assert!(config.contains("Endpoint = 10.0.0.1:12345"));
+    }
+
+    #[test]
+    fn render_client_config_full_tunnel() {
+        let config = render_client_config("K", "P", "1.1.1.1", 51820);
+        assert!(config.contains("AllowedIPs = 0.0.0.0/0"), "should route all traffic");
+    }
+}

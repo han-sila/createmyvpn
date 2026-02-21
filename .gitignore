@@ -28,5 +28,7 @@ design/DESIGN_SYSTEM.md
 
 scripts/
 
+test-results/
+
 .src-tauri/wintun.dll
 
