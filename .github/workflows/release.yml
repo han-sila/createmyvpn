@@ -6,13 +6,44 @@ on:
       - 'v*.*.*'
 
 permissions:
-  contents: write   # needed to create the GitHub release and upload assets
+  contents: write
 
 jobs:
-  # ── Build Windows installer ────────────────────────────────────────────────
+  # ── Step 1: Create the draft release first ─────────────────────────────────
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    outputs:
+      release_id: ${{ steps.create.outputs.id }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create draft release
+        id: create
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+        with:
+          draft: true
+          prerelease: false
+          name: 'CreateMyVPN ${{ github.ref_name }}'
+          body: |
+            ## CreateMyVPN ${{ github.ref_name }}
+
+            Deploy your private WireGuard VPN in under 2 minutes.
+
+            ### Downloads
+            - **Windows**: `.msi` installer or `.exe` setup
+            - **Linux**: `.deb` (Ubuntu/Debian) or `.AppImage` (universal)
+
+            ### What's included
+            See [PLAN.md](https://github.com/${{ github.repository }}/blob/main/docs/PLAN.md) for full details.
+
+  # ── Step 2: Build Windows installer ───────────────────────────────────────
   build-windows:
     name: Build — Windows
     runs-on: windows-latest
+    needs: create-release
     steps:
       - uses: actions/checkout@v4
 
@@ -36,19 +67,15 @@ jobs:
       - name: Build Tauri app (Windows)
         uses: tauri-apps/tauri-action@v0
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
         with:
-          tagName: ${{ github.ref_name }}
-          releaseName: 'CreateMyVPN ${{ github.ref_name }}'
-          releaseBody: |
-            See [CHANGELOG](https://github.com/${{ github.repository }}/blob/main/docs/PLAN.md) for details.
-          releaseDraft: true
-          prerelease: false
+          releaseId: ${{ needs.create-release.outputs.release_id }}
 
-  # ── Build Linux .deb ───────────────────────────────────────────────────────
+  # ── Step 3: Build Linux .deb / .AppImage ──────────────────────────────────
   build-linux:
     name: Build — Linux (Ubuntu)
     runs-on: ubuntu-22.04
+    needs: create-release
     steps:
       - uses: actions/checkout@v4
 
@@ -92,11 +119,6 @@ jobs:
       - name: Build Tauri app (Linux)
         uses: tauri-apps/tauri-action@v0
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
         with:
-          tagName: ${{ github.ref_name }}
-          releaseName: 'CreateMyVPN ${{ github.ref_name }}'
-          releaseBody: |
-            See [CHANGELOG](https://github.com/${{ github.repository }}/blob/main/docs/PLAN.md) for details.
-          releaseDraft: true
-          prerelease: false
+          releaseId: ${{ needs.create-release.outputs.release_id }}
