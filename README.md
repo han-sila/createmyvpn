@@ -173,4 +173,4 @@ This project is licensed under the [MIT License](LICENSE).
 
 ## Contributing
 
-Contributions are welcome! Please open an issue first to discuss what you'd like to change.
+Contributions are welcome! Please open an issue first to discuss what you'd like to change...
